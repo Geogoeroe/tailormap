@@ -22,6 +22,7 @@ export { VrijvLeiding } from './models/vrijv-leiding';
 export { Weginspectie } from './models/weginspectie';
 export { Wegvakonderdeel } from './models/wegvakonderdeel';
 export { Wegvakonderdeelplanning } from './models/wegvakonderdeelplanning';
+export { FeaturetypeMetadata } from './models/featuretype-metadata';
 export { PageWeginspectie } from './models/page-weginspectie';
 export { Pageable } from './models/pageable';
 export { Sort } from './models/sort';
