@@ -11,6 +11,7 @@ import {
   AttributeControllerService,
   Attribuut,
 } from '../../../shared/generated';
+import { LayerUtils } from '../../../shared/layer-utils/layer-utils.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,7 @@ export class DomainRepositoryService {
 
   constructor(
     private repo: AttributeControllerService,
+    private layerUtils: LayerUtils,
     private registry: LinkedAttributeRegistryService) {
   }
 
@@ -46,7 +48,7 @@ export class DomainRepositoryService {
         this.linkedAttributes = result;
         this.registry.setLinkedAttributes(this.linkedAttributes);
         for (const attribute of this.linkedAttributes) {
-          const featureType = attribute.object_naam.toLowerCase();
+          const featureType = LayerUtils.sanitzeLayername(attribute.tabel_naam.toLowerCase());
           const fc: FormConfiguration = this.formConfigs.config[featureType];
           fc.fields.forEach(field => {
             if (field.linkedList && field.linkedList === attribute.id) {
