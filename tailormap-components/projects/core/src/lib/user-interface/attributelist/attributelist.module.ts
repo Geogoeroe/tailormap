@@ -20,6 +20,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { AttributelistFilterValuesFormComponent } from './attributelist-filter-values-form/attributelist-filter-values-form.component';
+import { AttributelistTreeComponent } from './attributelist-tree/attributelist-tree/attributelist-tree.component';
 
 @NgModule({
   // The components, directives, and pipes that belong to this NgModule.
@@ -35,6 +36,7 @@ import { AttributelistFilterValuesFormComponent } from './attributelist-filter-v
     DetailsrowDirective,
     PanelResizerComponent,
     AttributelistFilterValuesFormComponent,
+    AttributelistTreeComponent,
   ],
   imports: [
     CommonModule,

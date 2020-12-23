@@ -7,7 +7,11 @@
  */
 
 import { DataSource } from '@angular/cdk/table';
-import { Observable, of } from 'rxjs';
+import {
+  forkJoin,
+  Observable,
+  of,
+} from 'rxjs';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
 
@@ -28,6 +32,11 @@ import { CheckState, DetailsState } from './attributelist-enums';
 import { DatasourceParams } from './datasource-params';
 import { FormconfigRepositoryService } from '../../../shared/formconfig-repository/formconfig-repository.service';
 import { LayerService } from '../layer.service';
+import { AttributelistNode } from '../attributelist-tree/attributelist-tree/attributelist-tree-models';
+import {
+  map,
+  take,
+} from 'rxjs/operators';
 
 export class AttributeDataSource extends DataSource<any> {
 
@@ -118,6 +127,56 @@ export class AttributeDataSource extends DataSource<any> {
     return cnt;
   }
 
+  public loadDataForAttributeTree(): Observable<AttributelistNode> {
+    // get columns
+    const passportName = this.params.featureTypeName;
+    let columnNames: string[] = [];
+    // let response: AttributelistNode;
+    this.formconfigRepoService.formConfigs$.subscribe(formConfigs => {
+      const formConfig = formConfigs.config[passportName];
+      if (formConfig && formConfig.fields) {
+        columnNames = formConfig.fields.map(attr => attr.key);
+      }
+    });
+
+    const attrParams: AttributeListParameters = {
+      application: this.layerService.getAppId(),
+      appLayer: this.params.layerId,
+      filter: this.params.featureFilter,
+      limit: 999,
+      page: 1,
+      featureType: this.params.featureTypeId,
+    };
+    return forkJoin([
+      this.formconfigRepoService.formConfigs$.pipe(take(1), map(formConfigs => {
+        const formConfig = formConfigs.config[passportName];
+        if (formConfig && formConfig.fields) {
+          columnNames = formConfig.fields.map(attr => attr.key);
+        }
+        return columnNames;
+      })),
+      this.attributeService.features$(attrParams),
+    ]).pipe(map(([columns, response]) => {
+      return {
+        name: passportName,
+        numberOfFeatures: response.features.length,
+        features: response.features,
+        columnNames: columns,
+        isChild: true,
+        params: attrParams,
+      };
+    }));
+  }
+
+  public loadTableData(attrTable: AttributelistTable, selectedTreeData): void {
+    this.columnController.setPassportColumnNames(selectedTreeData.columnNames);
+    this.rows.splice(0, this.rows.length);
+    selectedTreeData.features.forEach((feature) => {
+      this.rows.push(feature)
+    })
+    attrTable.onAfterLoadData();
+  }
+
   /**
    * Loads the data of a main or details table.
    */
@@ -189,7 +248,11 @@ export class AttributeDataSource extends DataSource<any> {
     // Set details params.
     if (this.params.hasDetail()) {
       attrParams.featureType = this.params.featureTypeId;
-      attrParams.filter = this.params.featureFilter;
+      if (attrParams.filter) {
+        attrParams.filter += ' AND (' + this.params.featureFilter + ')';
+      } else {
+        attrParams.filter = this.params.featureFilter;
+      }
     }
 
     // Set paging params.

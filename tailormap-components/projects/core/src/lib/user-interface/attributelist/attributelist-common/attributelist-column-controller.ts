@@ -13,6 +13,8 @@ export class AttributelistColumnController {
   // List with passport columns, i.e. selection of all columns.
   private passportColumns: AttributelistColumn[] = [];
 
+  private test: string [] = [];
+
   // List of active (i.e. visible) columns.
   private activeColumns: AttributelistColumn[] = [];
 
@@ -181,6 +183,10 @@ export class AttributelistColumnController {
     this.updateActiveColumns();
   }
 
+  public getTest(): string[] {
+    return this.test;
+  }
+
   /**
    * Sets the passport column names.
    */
@@ -190,6 +196,7 @@ export class AttributelistColumnController {
       this.passportColumns.splice(0, this.passportColumns.length);
     } else {
       // Set passport columns.
+      this.test = columnNames;
       this.passportColumns = this.columnNamesToColumns(columnNames);
     }
     // Activate passport columns.

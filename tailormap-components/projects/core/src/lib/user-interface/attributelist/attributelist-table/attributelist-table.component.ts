@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  OnDestroy,
   OnInit,
   Output,
   ViewChild,
@@ -49,6 +50,19 @@ import { TailorMapService } from '../../../../../../bridge/src/tailor-map.servic
 import { HighlightService } from '../../../shared/highlight-service/highlight.service';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { AttributelistColumn } from '../attributelist-common/attributelist-column-models';
+import {
+  AttributelistNode,
+  TreeDialogData,
+} from '../attributelist-tree/attributelist-tree/attributelist-tree-models';
+import { AttributelistTreeComponent } from '../attributelist-tree/attributelist-tree/attributelist-tree.component';
+import {
+  Subject,
+} from 'rxjs';
+import {
+  concatMap,
+  takeUntil,
+} from 'rxjs/operators';
+import { fromArray } from 'rxjs/internal/observable/fromArray';
 // import { LiteralMapKey } from '@angular/compiler';
 
 @Component({
@@ -63,7 +77,7 @@ import { AttributelistColumn } from '../attributelist-common/attributelist-colum
     ]),
   ],
 })
-export class AttributelistTableComponent implements AttributelistTable, AttributelistRefresh, OnInit, AfterViewInit {
+export class AttributelistTableComponent implements AttributelistTable, AttributelistRefresh, OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild(MatPaginator) private paginator: MatPaginator;
   @ViewChild(MatSort) private sort: MatSort;
@@ -86,6 +100,9 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
   public dataSource = new AttributeDataSource(this.layerService,
                                               this.attributeService,
                                               this.formconfigRepoService);
+
+  public checkedRows = [];
+  public treeData = new Array<AttributelistNode>();
 
   public filter = new AttributelistFilter(
     this.dataSource,
@@ -118,6 +135,8 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
 
   public contextMenuPosition = { x: '0px', y: '0px' };
 
+  private destroyed = new Subject();
+
   constructor(private attributeService: AttributeService,
               private layerService: LayerService,
               private statisticsService: StatisticService,
@@ -133,6 +152,26 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
   }
 
   public ngOnInit(): void {
+    this.attributelistService.selectedTreeData$.pipe(takeUntil(this.destroyed)).subscribe(selectedTreeData => {
+      if (!selectedTreeData.isChild) {
+        this.dataSource.params.featureTypeId = -1;
+        this.dataSource.params.featureTypeName = '';
+        this.dataSource.params.featureFilter = '';
+        this.dataSource.params.valueFilter = '';
+      } else {
+        this.dataSource.params.featureTypeId = selectedTreeData.params.featureType;
+        this.dataSource.params.featureFilter = selectedTreeData.params.filter;
+        this.dataSource.params.featureTypeName = selectedTreeData.name;
+      }
+      this.filter.test();
+      this.dataSource.loadTableData(this, selectedTreeData);
+      this.attributelistService.updateTreeData(this.treeData);
+    });
+  }
+
+  public ngOnDestroy(): void {
+    this.destroyed.next();
+    this.destroyed.complete();
   }
 
   public ngAfterViewInit(): void {
@@ -224,7 +263,81 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
   }
 
   public onObjectOptionsClick(): void {
-    alert('Not yet implemented.');
+    this.treeData = [];
+    const filterForFeatureTypes = new Map<number, string>();
+    let filter = '';
+    const relatedFeatures = [];
+    this.checkedRows.forEach((row) => {
+      const related = row.related_featuretypes;
+      related.forEach((r) => {
+        if (filterForFeatureTypes.has(r.id)) {
+          filter = filterForFeatureTypes.get(r.id);
+          filterForFeatureTypes.set(r.id, filter += ' OR ' + r.filter );
+        } else {
+          filterForFeatureTypes.set(r.id, r.filter);
+          relatedFeatures.push(r);
+        }
+      });
+    });
+
+    const layer = this.layerService.getLayerByTabIndex(this.tabIndex);
+    if (layer.name === '') {
+      return;
+    }
+    // Set params layer name and id.
+    this.dataSource.params.layerName = layer.name;
+    this.dataSource.params.layerId = layer.id;
+    this.treeData.push({
+      name: layer.name,
+      numberOfFeatures: this.nrChecked,
+      features: this.checkedRows,
+      params: {
+        application: this.layerService.getAppId(),
+        appLayer: layer.id},
+      isChild: false,
+      columnNames: this.dataSource.columnController.getTest(),
+      children: [],
+    });
+    fromArray(relatedFeatures).pipe(concatMap(feature => {
+      this.dataSource.params.featureTypeId = feature.id;
+      this.dataSource.params.featureTypeName = feature.foreignFeatureTypeName;
+      this.dataSource.params.featureFilter = filterForFeatureTypes.get(feature.id);
+      return this.dataSource.loadDataForAttributeTree();
+    })).subscribe({
+      next: (result) => {
+        this.setTreeData(result);
+      },
+      complete: () => {
+        this.dataSource.params.featureTypeId = -1;
+        this.dataSource.params.featureTypeName = '';
+        this.dataSource.params.featureFilter = '';
+        this.openDialog();
+      },
+    })
+  }
+
+  public setTreeData(values: AttributelistNode) {
+    this.treeData[0].children.push(values);
+  }
+
+  public openDialog() {
+    const dialogData : TreeDialogData = {
+      rowsChecked: this.nrChecked,
+      tree: this.treeData,
+    };
+    const dialogRef = this.dialog.open(AttributelistTreeComponent, {
+      width: '400px',
+      data: dialogData,
+      position: {
+        right: '50px',
+      },
+      hasBackdrop: false,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log(result);
+      this.checkedRows = [];
+    });
   }
 
   public onPageChange(event): void {
@@ -249,6 +362,7 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     // Toggle the checkbox in the checked row.
     this.dataSource.toggleChecked(row);
     // Update check info.
+    this.checkedRows.push(row);
     this.updateCheckedInfo();
   }
 
@@ -298,6 +412,9 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
    * Fired when a column filter is clicked.
    */
   public onFilterClick(columnName: string): void {
+    if (this.dataSource.params.hasDetail()) {
+      console.log('filter voor detail tab');
+    }
     this.filter.setFilter(this, columnName);
   }
 
@@ -448,4 +565,9 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     this.updateCheckedInfo();
   }
 
+  public resetTable(): void {
+    this.checkedRows = [];
+    this.dataSource.params.valueFilter = '';
+    this.setTabIndex(this.tabIndex);
+  }
 }

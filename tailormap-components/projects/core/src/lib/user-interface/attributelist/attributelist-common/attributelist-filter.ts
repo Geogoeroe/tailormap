@@ -28,6 +28,7 @@ export class AttributelistFilter {
   private valueParams: ValueParameters = {
     applicationLayer: 0,
     attributes: [],
+    maxFeatures: -1,
   }
 
   public layerFilterValues: LayerFilterValues = {
@@ -80,7 +81,7 @@ export class AttributelistFilter {
               }
               this.valueFilter += quote + v.value + quote;
             }
-          })
+          });
           this.valueFilter += ')';
         }
       }
@@ -88,9 +89,20 @@ export class AttributelistFilter {
     return this.valueFilter;
   }
 
+  public test(): void {
+    this.layerFilterValues.columns = [];
+  }
+
   public setFilter(attributelistRefresh: AttributelistRefresh, columnName: string): void {
     // Get the unique values for this column
     this.valueParams.applicationLayer = this.dataSource.params.layerId;
+    if (this.dataSource.params.hasDetail()) {
+      this.valueParams.featureType = this.dataSource.params.featureTypeId;
+      // this.valueParams.filter = this.dataSource.params.featureFilter;
+    } else {
+      delete this.valueParams.featureType;
+      this.valueParams.filter = '';
+    }
     this.valueParams.attributes = [];
     this.valueParams.attributes.push(columnName);
     this.valueService.uniqueValues(this.valueParams).subscribe((data: UniqueValuesResponse) => {
