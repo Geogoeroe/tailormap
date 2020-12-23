@@ -4,6 +4,7 @@ import {
   AttributeListParameters,
 } from '../../../../shared/attribute-service/attribute-models';
 import { DatasourceParams } from '../../attributelist-common/datasource-params';
+import { RowData } from '../../attributelist-common/attributelist-models';
 
 export interface TreeDialogData {
   rowsChecked: number;

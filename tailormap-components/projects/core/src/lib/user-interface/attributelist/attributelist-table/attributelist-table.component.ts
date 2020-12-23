@@ -63,6 +63,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import { fromArray } from 'rxjs/internal/observable/fromArray';
+import {
+  AttributeListFeature,
+  Relation,
+} from '../../../shared/attribute-service/attribute-models';
 // import { LiteralMapKey } from '@angular/compiler';
 
 @Component({
@@ -101,8 +105,10 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
                                               this.attributeService,
                                               this.formconfigRepoService);
 
-  public checkedRows = []; // moet dit niet van het type RowData[] zijn? Ik zie op L365 dat dit erin zit, maar dat is niet het type dat verwacht wordt door Treedata hieronder
+  public checkedRows: AttributeListFeature[] = [];
   public treeData = new Array<AttributelistNode>();
+
+  private filterMap = new Map<number, AttributelistFilter>();
 
   public filter = new AttributelistFilter(
     this.dataSource,
@@ -163,7 +169,6 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
         this.dataSource.params.featureFilter = selectedTreeData.params.filter;
         this.dataSource.params.featureTypeName = selectedTreeData.name;
       }
-      this.filter.test();
       this.dataSource.loadTableData(this, selectedTreeData);
       this.attributelistService.updateTreeData(this.treeData);
     });
@@ -204,7 +209,7 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     // Update the table rows.
     this.table.renderRows();
 
-    this.filter.initFiltering(this.getColumnNames());
+    this.filterMap.get(this.dataSource.params.featureTypeId).initFiltering(this.getColumnNames());
 
     this.statistic.initStatistics(this.getColumnNames());
 
@@ -362,7 +367,11 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     // Toggle the checkbox in the checked row.
     this.dataSource.toggleChecked(row);
     // Update check info.
-    this.checkedRows.push(row);
+    this.checkedRows.push({
+      features: row,
+      related_featuretypes: row.related_featuretypes,
+      __fid: row.__fid,
+    });
     this.updateCheckedInfo();
   }
 
@@ -415,7 +424,8 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     if (this.dataSource.params.hasDetail()) {
       console.log('filter voor detail tab');
     }
-    this.filter.setFilter(this, columnName);
+    this.filterMap.get(this.dataSource.params.featureTypeId).setFilter(this, columnName);
+    // this.filter.setFilter(this, columnName);
   }
 
   /**
@@ -430,8 +440,8 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
 
   private setFilterInAppLayer() {
     const viewerController = this.tailorMapService.getViewerController();
-    const appLayer = viewerController.getAppLayerById(this.filter.layerFilterValues.layerId);
-    const cql = this.filter.createFilter();
+    const appLayer = viewerController.getAppLayerById(this.filterMap.get(this.dataSource.params.featureTypeId).layerFilterValues.layerId);
+    const cql = this.filterMap.get(this.dataSource.params.featureTypeId).createFilter();
     viewerController.setFilterString(cql, appLayer, 'ngattributelist');
   }
 
@@ -439,7 +449,7 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
    * Check if a filter is active on a column
    */
   public getIsFilterActive(columnName): boolean {
-    const colObject = this.filter.layerFilterValues.columns.find(c => c.name === columnName);
+    const colObject = this.filterMap.get(this.dataSource.params.featureTypeId).layerFilterValues.columns.find(c => c.name === columnName);
     let result: boolean;
     if (colObject) {
       result = colObject.status;
@@ -569,5 +579,14 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     this.checkedRows = [];
     this.dataSource.params.valueFilter = '';
     this.setTabIndex(this.tabIndex);
+  }
+
+  public setFilterMap(featureType: number): void {
+    this.filterMap.set(featureType,
+      new AttributelistFilter(
+        this.dataSource,
+        this.valueService,
+        this.dialog,
+      ));
   }
 }

@@ -25,7 +25,6 @@ export interface AttributeListResponse {
 
 export interface AttributeListFeature {
   [key: string]: any;
-
   related_featuretypes?: RelatedFeatureType[];
   __fid: number | string;
 }

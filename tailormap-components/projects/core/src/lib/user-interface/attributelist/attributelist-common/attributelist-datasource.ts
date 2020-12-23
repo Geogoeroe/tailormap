@@ -32,11 +32,15 @@ import { CheckState, DetailsState } from './attributelist-enums';
 import { DatasourceParams } from './datasource-params';
 import { FormconfigRepositoryService } from '../../../shared/formconfig-repository/formconfig-repository.service';
 import { LayerService } from '../layer.service';
-import { AttributelistNode } from '../attributelist-tree/attributelist-tree/attributelist-tree-models';
+import {
+  AttributelistNode,
+  SelectedTreeData,
+} from '../attributelist-tree/attributelist-tree/attributelist-tree-models';
 import {
   map,
   take,
 } from 'rxjs/operators';
+import { AttributelistTableComponent } from '../attributelist-table/attributelist-table.component';
 
 export class AttributeDataSource extends DataSource<any> {
 
@@ -168,19 +172,23 @@ export class AttributeDataSource extends DataSource<any> {
     }));
   }
 
-  public loadTableData(attrTable: AttributelistTable, selectedTreeData): void {
+  public loadTableData(attrTable: AttributelistTable, selectedTreeData: SelectedTreeData): void {
     this.columnController.setPassportColumnNames(selectedTreeData.columnNames);
     this.rows.splice(0, this.rows.length);
     selectedTreeData.features.forEach((feature) => {
-      this.rows.push(feature)
-    })
+      if (feature.features) {
+        this.rows.push(feature.features);
+      } else {
+        this.rows.push(feature);
+      }
+    });
     attrTable.onAfterLoadData();
   }
 
   /**
    * Loads the data of a main or details table.
    */
-  public loadData(attrTable: AttributelistTable): void {
+  public loadData(attrTable: AttributelistTableComponent): void {
 
     // if (!this.params.hasDetail()) {
     //   console.log('#DataSource - loadData - ' + this.params.layerName);
@@ -303,7 +311,10 @@ export class AttributeDataSource extends DataSource<any> {
               this.metadataGetColumns(prefix, metadata);
 
             // console.log(columnNames);
-
+            attrTable.setFilterMap(-1);
+            metadata.relations.forEach((relation => {
+              attrTable.setFilterMap(relation.foreignFeatureType);
+            }));
             // And set as initial column names.
             this.columnController.setDataColumnNames(columnDefs);
           }
