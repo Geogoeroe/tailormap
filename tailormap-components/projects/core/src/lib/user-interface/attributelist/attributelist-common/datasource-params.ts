@@ -6,8 +6,8 @@ export class DatasourceParams {
   // Use for getting layer detail info.
   public featureTypeId = -1;
   public featureTypeName = '';
-  public featureFilter = '';
-  public valueFilter = '';
+  public featureFilter = ''; // XXX wat is dit
+  public valueFilter = ''; // XXX wat is dit
 
   /**
    * Returns if the params are for getting data a detail table.

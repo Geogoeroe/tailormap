@@ -101,7 +101,7 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
                                               this.attributeService,
                                               this.formconfigRepoService);
 
-  public checkedRows = [];
+  public checkedRows = []; // moet dit niet van het type RowData[] zijn? Ik zie op L365 dat dit erin zit, maar dat is niet het type dat verwacht wordt door Treedata hieronder
   public treeData = new Array<AttributelistNode>();
 
   public filter = new AttributelistFilter(
@@ -264,18 +264,18 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
 
   public onObjectOptionsClick(): void {
     this.treeData = [];
-    const filterForFeatureTypes = new Map<number, string>();
+    const filterForFeatureTypes = new Map<number, string>(); // moet deze niet globaal zijn?
     let filter = '';
     const relatedFeatures = [];
     this.checkedRows.forEach((row) => {
       const related = row.related_featuretypes;
-      related.forEach((r) => {
-        if (filterForFeatureTypes.has(r.id)) {
-          filter = filterForFeatureTypes.get(r.id);
-          filterForFeatureTypes.set(r.id, filter += ' OR ' + r.filter );
+      related.forEach((relate) => {
+        if (filterForFeatureTypes.has(relate.id)) {
+          filter = filterForFeatureTypes.get(relate.id);
+          filterForFeatureTypes.set(relate.id, filter += ' OR ' + relate.filter ); // moet dit geen AND zijn?
         } else {
-          filterForFeatureTypes.set(r.id, r.filter);
-          relatedFeatures.push(r);
+          filterForFeatureTypes.set(relate.id, relate.filter);
+          relatedFeatures.push(relate);
         }
       });
     });
@@ -290,7 +290,7 @@ export class AttributelistTableComponent implements AttributelistTable, Attribut
     this.treeData.push({
       name: layer.name,
       numberOfFeatures: this.nrChecked,
-      features: this.checkedRows,
+      features: this.checkedRows, // ToDo deze types komen niet overeen
       params: {
         application: this.layerService.getAppId(),
         appLayer: layer.id},
