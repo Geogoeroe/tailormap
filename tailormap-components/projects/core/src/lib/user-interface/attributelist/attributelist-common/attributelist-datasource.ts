@@ -248,8 +248,12 @@ export class AttributeDataSource extends DataSource<any> {
   }
 
   public loadTableData(attrTable: AttributelistTable, selectedTreeData: SelectedTreeData): void {
-    this.columnController.setPassportColumnNames(selectedTreeData.columnNames);
     this.rows.splice(0, this.rows.length);
+    if (selectedTreeData == null) {
+      attrTable.onAfterLoadData();
+      return;
+    }
+    this.columnController.setPassportColumnNames(selectedTreeData.columnNames);
     selectedTreeData.features.forEach((feature) => {
       if (feature.features) {
         this.rows.push(feature.features);

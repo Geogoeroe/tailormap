@@ -93,6 +93,10 @@ export class AttributelistTreeComponent implements OnDestroy, OnInit {
       this.dataSource.data = treeData;
       this.treeControl.expandAll();
     });
+
+    this.attributelistService.openPassportForm$.pipe(takeUntil(this.destroyed)).subscribe(data => {
+      this.openPassportForm();
+    });
   }
 
   public ngOnDestroy(): void {
@@ -100,7 +104,7 @@ export class AttributelistTreeComponent implements OnDestroy, OnInit {
     this.destroyed.complete();
   }
 
-  public openPasportForm(): void {
+  public openPassportForm(): void {
     this.openPasportDialog(this.dataSource.data[0].formFeatures);
   }
 

@@ -17,6 +17,7 @@
 package nl.b3p.viewer.util;
 
 import nl.b3p.viewer.config.services.*;
+import org.apache.commons.lang.StringUtils;
 import org.geotools.factory.CommonFactoryFinder;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
@@ -214,8 +215,8 @@ public class FlamingoCQL {
     }
 
     private static String retrieveRelatedFilter(String filter) {
-        int endSubFilter = filter.lastIndexOf(",") + 1;
-
+        // int endSubFilter = filter.lastIndexOf(",") + 1;
+        int endSubFilter = StringUtils.ordinalIndexOf(filter, ",", 2) + 1;
         int endIndex = findIndexOfClosingBracket(endSubFilter, filter);
         if (endIndex == endSubFilter) {
             endIndex = filter.indexOf(";", endSubFilter) - 1;

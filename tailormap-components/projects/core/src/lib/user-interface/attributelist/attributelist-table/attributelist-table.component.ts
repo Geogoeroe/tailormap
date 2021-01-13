@@ -275,14 +275,21 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
       related.forEach((r) => {
         if (filterForFeatureTypes.has(r.id)) {
           filter = filterForFeatureTypes.get(r.id);
-          filterForFeatureTypes.set(r.id, filter += ' OR ' + r.filter );
+          const column = r.filter.split('=')[0].split(' ')[0];
+          const value = r.filter.split('=')[1].split(' ')[1];
+          filterForFeatureTypes.set(r.id, filter += ', ' + value );
         } else {
-          filterForFeatureTypes.set(r.id, r.filter);
+          const column = r.filter.split('=')[0].split(' ')[0];
+          const value = r.filter.split('=')[1].split(' ')[1];
+          const filter = column + ' IN (' + value;
+          filterForFeatureTypes.set(r.id, filter);
           relatedFeatures.push(r);
         }
       });
     });
-
+    filterForFeatureTypes.forEach((value,key) =>{
+      filterForFeatureTypes.set(key, value + ')');
+    });
     const layer = this.layerService.getLayerByTabIndex(this.tabIndex);
     if (layer.name === '') {
       return;
@@ -320,17 +327,21 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
           this.isRelatedRefresh = false;
           this.attributelistService.updateTreeData(this.treeData);
           if (this.selectedTreeData.isChild) {
-            this.treeData[0].children.forEach((data) => {
-              if (data.params.featureType === this.selectedTreeData.params.featureType) {
-                this.selectedTreeData = {
-                  features: data.features,
-                  params: data.params,
-                  isChild: data.isChild,
-                  name: data.name,
-                  columnNames: data.columnNames,
+            if (this.treeData[0].children.length > 0) {
+              this.treeData[0].children.forEach((data) => {
+                if (data.params.featureType === this.selectedTreeData.params.featureType) {
+                  this.selectedTreeData = {
+                    features: data.features,
+                    params: data.params,
+                    isChild: data.isChild,
+                    name: data.name,
+                    columnNames: data.columnNames,
+                  }
                 }
-              }
-            });
+              });
+            } else {
+              this.selectedTreeData = null;
+            }
           } else {
             this.selectedTreeData = {
               features: this.treeData[0].features,
@@ -473,8 +484,8 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
         this.filterMap.get(-1).setRelatedFilter('RELATED_LAYER(' +
           this.dataSource.params.layerId + ',' +
           this.dataSource.params.featureTypeId + ',' +
-          this.dataSource.params.valueFilter + ' AND (' +
-          this.dataSource.params.featureFilter + ');)');
+          this.dataSource.params.valueFilter + ' AND ' +
+          this.dataSource.params.featureFilter + ';)');
       }
       this.dataSource.params.featureTypeId = -1;
       this.dataSource.params.featureTypeName = '';

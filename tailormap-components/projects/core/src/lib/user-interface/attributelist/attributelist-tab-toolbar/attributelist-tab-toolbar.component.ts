@@ -14,6 +14,7 @@ import { filter, switchMap, take, takeUntil } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { AttributelistLayernameChooserComponent } from '../attributelist-layername-chooser/attributelist-layername-chooser.component';
 import { UserLayerHelper } from '../../../analysis/helpers/user-layer.helper';
+import { AttributelistService } from '../attributelist.service';
 
 @Component({
   selector: 'tailormap-attributelist-tab-toolbar',
@@ -44,7 +45,8 @@ export class AttributelistTabToolbarComponent implements OnInit, OnDestroy {
     private tailorMapService: TailorMapService,
     public dialog: MatDialog,
     private metadataService: MetadataService,
-    private _snackBar: MatSnackBar) {
+    private _snackBar: MatSnackBar,
+    public attributelistService: AttributelistService) {
   }
 
   public ngOnInit(): void {
@@ -78,6 +80,10 @@ export class AttributelistTabToolbarComponent implements OnInit, OnDestroy {
 
   public isUserLayer(): boolean {
     return this.layer && this.tailorMapService.getApplayerById(this.layer.id).userlayer;
+  }
+
+  public openPassportForm(): void {
+    this.attributelistService.openPassportForm();
   }
 
   public createUserlayer(): void {

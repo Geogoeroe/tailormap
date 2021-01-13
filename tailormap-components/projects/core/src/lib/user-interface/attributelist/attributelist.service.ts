@@ -19,13 +19,13 @@ export class AttributelistService {
 
   private updateTreeDataSubject$ = new Subject<AttributelistNode[]>();
 
-  private openAttributeTreeSubject$ = new Subject();
+  private openPassportFormSubject$ = new Subject();
 
   private selectedTreeDataSubject$ = new Subject<SelectedTreeData>(); // source voor Observable
 
   public updateTreeData$ = this.updateTreeDataSubject$.asObservable();
 
-  public openAttributeTree$ = this.openAttributeTreeSubject$.asObservable();
+  public openPassportForm$ = this.openPassportFormSubject$.asObservable();
 
   public selectedTreeData$ = this.selectedTreeDataSubject$.asObservable(); // ingang naar Observable
 
@@ -37,7 +37,7 @@ export class AttributelistService {
     this.selectedTreeDataSubject$.next(selectedTreeData);
   }
 
-  public openAttributeTree(): void {
-    this.openAttributeTreeSubject$.next();
+  public openPassportForm(): void {
+    this.openPassportFormSubject$.next();
   }
 }
