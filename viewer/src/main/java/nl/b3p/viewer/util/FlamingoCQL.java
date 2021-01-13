@@ -218,7 +218,7 @@ public class FlamingoCQL {
 
         int endIndex = findIndexOfClosingBracket(endSubFilter, filter);
         if (endIndex == endSubFilter) {
-            endIndex = filter.indexOf(")", endSubFilter) - 1;
+            endIndex = filter.indexOf(";", endSubFilter) - 1;
         }
         String relatedFilterString = filter.substring(endSubFilter, endIndex + 1);
         return relatedFilterString;

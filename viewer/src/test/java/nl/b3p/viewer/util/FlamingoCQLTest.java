@@ -66,19 +66,19 @@ public class FlamingoCQLTest extends TestUtil{
     @Test
     public void testtoFilterRelatedLayer() throws CQLException {
         int a = 0;
-        String input = "RELATED_LAYER(3,2,fysiek_voork = 'aap')";
+        String input = "RELATED_LAYER(3,2,fysiek_voork = 'aap');";
         Filter output = cql.toFilter(input, entityManager, false);
         assertEquals(Subselect.class, output.getClass());
     }
 
     @Test
     public void testtoFilterRelatedLayerExtraParens() throws CQLException {
-        assertEquals(Subselect.class,  cql.toFilter("(RELATED_LAYER(3,2,fysiek_voork = 'aap'))", entityManager, false).getClass());
+        assertEquals(Subselect.class,  cql.toFilter("(RELATED_LAYER(3,2,fysiek_voork = 'aap');)", entityManager, false).getClass());
     }
 
     @Test
     public void testtoFilterRelatedLayerDoubleExtraParens() throws CQLException {
-        assertEquals(Subselect.class,  cql.toFilter("((RELATED_LAYER(3,2,fysiek_voork = 'aap')))", entityManager, false).getClass());
+        assertEquals(Subselect.class,  cql.toFilter("((RELATED_LAYER(3,2,fysiek_voork = 'aap');))", entityManager, false).getClass());
     }
 
     @Test
@@ -99,31 +99,31 @@ public class FlamingoCQLTest extends TestUtil{
 
     @Test
     public void testtoFilterRelatedLayerExtraParensAroundSubquery() throws CQLException {
-        Filter output = cql.toFilter("RELATED_LAYER(3,2,(fysiek_voork = 'aap'))", entityManager, false);
+        Filter output = cql.toFilter("RELATED_LAYER(3,2,(fysiek_voork = 'aap');)", entityManager, false);
         assertEquals(Subselect.class, output.getClass());
     }
 
     @Test
     public void testtoFilterRelatedLayerTwoRelatedLayer() throws CQLException {
-        Filter output = cql.toFilter("RELATED_LAYER(3,2,(fysiek_voork = 'aap')) AND RELATED_LAYER(3,2,(fysiek_voork = 'aap'))", entityManager, false);
+        Filter output = cql.toFilter("RELATED_LAYER(3,2,(fysiek_voork = 'aap')) AND RELATED_LAYER(3,2,(fysiek_voork = 'aap');)", entityManager, false);
         assertEquals(true,And.class.isAssignableFrom( output.getClass()));
     }
 
     @Test
     public void testtoFilterRelatedLayerExtraFilterAtEnd() throws CQLException {
-        Filter output = cql.toFilter("RELATED_LAYER(3,2,fysiek_voork = 'aap') AND jaar = 2020", entityManager, false);
+        Filter output = cql.toFilter("RELATED_LAYER(3,2,fysiek_voork = 'aap'); AND jaar = 2020", entityManager, false);
         assertEquals(true, And.class.isAssignableFrom(output.getClass()));
     }
 
     @Test
     public void testtoFilterRelatedLayerExtraFilterAtStart() throws CQLException {
-        Filter output = cql.toFilter("jaar = 2020 AND RELATED_LAYER(3,2,fysiek_voork = 'aap')", entityManager, false);
+        Filter output = cql.toFilter("jaar = 2020 AND RELATED_LAYER(3,2,fysiek_voork = 'aap');", entityManager, false);
         assertEquals(true, And.class.isAssignableFrom(output.getClass()));
     }
 
     @Test
     public void testtoFilterRelatedLayerExtraFilterAtEndWithParens() throws CQLException {
-        Filter output = cql.toFilter("((RELATED_LAYER(3,2,fysiek_voork = 'aap') AND (std_verhardingssoort ILIKE '%formaat%')))", entityManager, false);
+        Filter output = cql.toFilter("((RELATED_LAYER(3,2,fysiek_voork = 'aap') AND (std_verhardingssoort ILIKE '%formaat%');))", entityManager, false);
         assertEquals(true, And.class.isAssignableFrom(output.getClass()));
     }
 
