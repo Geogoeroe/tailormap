@@ -32,4 +32,5 @@ export interface SelectedTreeData {
   params: AttributeListParameters;
   isChild: boolean;
   name: string;
+  numberOfFeatures: number;
 }

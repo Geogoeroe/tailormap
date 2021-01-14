@@ -59,7 +59,11 @@ export class AttributelistFilter {
   }
 
   public setRelatedFilter(filter: string): void {
-    this.relatedFilter = filter;
+    if (this.relatedFilter) {
+      this.relatedFilter += ' AND ' + filter;
+    }else {
+      this.relatedFilter = filter;
+    }
   }
 
   public getRelatedFilter(): string {

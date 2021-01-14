@@ -143,6 +143,18 @@ export class AttributeDataSource extends DataSource<any> {
     return cnt;
   }
 
+  public getfirstRowsAsAttributeListFeature(): AttributeListFeature[] {
+    const features: AttributeListFeature[] = [];
+    this.rows.forEach( (row: RowData) => {
+      features.push({
+        features: row,
+        related_featuretypes: row.related_featuretypes,
+        __fid: row.__fid,
+      });
+    });
+    return features;
+  }
+
   public getCheckedRowsAsAttributeListFeature(): AttributeListFeature[] {
     const featuresChecked: AttributeListFeature[] = [];
     this.rows.forEach( (row: RowData) => {
@@ -213,18 +225,24 @@ export class AttributeDataSource extends DataSource<any> {
 
     let filter = '';
     if (this.params.valueFilter) {
-      filter = this.params.valueFilter + ' AND (' + this.params.featureFilter + ')';
-    } else {
+      filter = this.params.valueFilter;
+    }
+    if (this.params.featureFilter) {
       filter = this.params.featureFilter;
     }
+    if (this.params.featureFilter && this.params.valueFilter) {
+      filter = this.params.valueFilter + ' AND (' + this.params.featureFilter + ')';
+    }
+
     const attrParams: AttributeListParameters = {
       application: this.layerService.getAppId(),
       appLayer: this.params.layerId,
       filter,
-      limit: 999,
+      limit: this.paginator.pageSize,
       page: 1,
       featureType: this.params.featureTypeId,
       start: 0,
+      clearTotalCountCache: true,
     };
     return forkJoin([
       this.formconfigRepoService.formConfigs$.pipe(take(1), map(formConfigs => {
@@ -238,7 +256,7 @@ export class AttributeDataSource extends DataSource<any> {
     ]).pipe(map(([columns, response]) => {
       return {
         name: passportName,
-        numberOfFeatures: response.features.length,
+        numberOfFeatures: response.total,
         features: response.features,
         columnNames: columns,
         isChild: true,
@@ -254,14 +272,25 @@ export class AttributeDataSource extends DataSource<any> {
       return;
     }
     this.columnController.setPassportColumnNames(selectedTreeData.columnNames);
+    this.totalNrOfRows = selectedTreeData.numberOfFeatures;
     selectedTreeData.features.forEach((feature) => {
       if (feature.features) {
         this.rows.push(feature.features);
       } else {
         this.rows.push(feature);
       }
-    })
-    attrTable.onAfterLoadData();
+    });
+    this.getMetaData$().subscribe((result) => {
+      const columnDefs: Attribute[] = this.metadataGetColumns('', result);
+
+      // And set as initial column names and attributes
+      // TODO: combine these methods?
+      this.columnController.setDataColumnNames(columnDefs);
+      this.columnController.setAttributes(columnDefs);
+    }, () => {},
+      () => {
+        attrTable.onAfterLoadData();
+      });
   }
 
   private getMetadataParams(): AttributeMetadataParameters {
@@ -359,11 +388,11 @@ export class AttributeDataSource extends DataSource<any> {
       attrParams.page = 1;
       attrParams.start = this.paginator.pageIndex * this.paginator.pageSize;
     } else {
-      attrParams.limit = 999;
+      attrParams.limit = -1;
       attrParams.page = 1;
       attrParams.start = 0;
     }
-
+    attrParams.clearTotalCountCache = true;
     // Set sorting params.
     attrParams.dir = this.sorter.direction.toUpperCase();
     if (attrParams.dir === '') {
@@ -519,7 +548,10 @@ export class AttributeDataSource extends DataSource<any> {
     }
 
     for (const attr of metadata.attributes) {
+      // Check feature type.
+      if (attr.featureType === featureType) {
         columns.push(attr);
+      }
     }
     return columns;
   }
@@ -540,5 +572,9 @@ export class AttributeDataSource extends DataSource<any> {
    */
   public toggleChecked(row: RowData): void {
     row._checked = !row._checked;
+  }
+
+  public getFirstRow(): RowData {
+    return this.rows[0];
   }
 }

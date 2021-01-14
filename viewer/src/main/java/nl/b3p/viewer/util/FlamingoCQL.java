@@ -197,8 +197,8 @@ public class FlamingoCQL {
 
     private static int findIndexOfClosingBracket(int startIndex, String filter) {
 
-        int openBrackets = 0, closingBrackets = 0, endIndex = 0;
-        for (int i = startIndex; i < filter.length(); i++) {
+        int openBrackets = 0, closingBrackets = 0, endIndex = 0, length = filter.length();
+        for (int i = startIndex; i < length; i++) {
             char c = filter.charAt(i);
             if (c == '(') {
                 openBrackets++;
@@ -215,11 +215,10 @@ public class FlamingoCQL {
     }
 
     private static String retrieveRelatedFilter(String filter) {
-        // int endSubFilter = filter.lastIndexOf(",") + 1;
         int endSubFilter = StringUtils.ordinalIndexOf(filter, ",", 2) + 1;
         int endIndex = findIndexOfClosingBracket(endSubFilter, filter);
         if (endIndex == endSubFilter) {
-            endIndex = filter.indexOf(";", endSubFilter) - 1;
+            endIndex = filter.indexOf(")", endSubFilter) - 1;
         }
         String relatedFilterString = filter.substring(endSubFilter, endIndex + 1);
         return relatedFilterString;

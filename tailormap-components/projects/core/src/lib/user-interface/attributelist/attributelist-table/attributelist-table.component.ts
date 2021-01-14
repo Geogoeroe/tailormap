@@ -104,6 +104,8 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
 
   private isRelatedRefresh = false;
 
+  private rowsChecked = false;
+
   public statistic = new AttributelistStatistic(
     this.statisticsService,
     this.dataSource,
@@ -204,7 +206,9 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
 
     this.statistic.initStatistics(this.getColumnNames());
     if (this.isRelatedRefresh) {
-      this.dataSource.setAllRowsChecked();
+      if (this.rowsChecked) {
+        this.dataSource.setAllRowsChecked();
+      }
       this.onObjectOptionsClick();
     }
     this.updateCheckedInfo();
@@ -269,7 +273,7 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
     const filterForFeatureTypes = new Map<number, string>();
     let filter = '';
     const relatedFeatures = [];
-    const checkedFeatures = this.dataSource.getCheckedRowsAsAttributeListFeature();
+    let checkedFeatures = this.dataSource.getCheckedRowsAsAttributeListFeature();
     checkedFeatures.forEach((row) => {
       const related = row.related_featuretypes;
       related.forEach((r) => {
@@ -281,13 +285,12 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
         } else {
           const column = r.filter.split('=')[0].split(' ')[0];
           const value = r.filter.split('=')[1].split(' ')[1];
-          const filter = column + ' IN (' + value;
-          filterForFeatureTypes.set(r.id, filter);
+          filterForFeatureTypes.set(r.id, column + ' IN (' + value);
           relatedFeatures.push(r);
         }
       });
     });
-    filterForFeatureTypes.forEach((value,key) =>{
+    filterForFeatureTypes.forEach((value, key) => {
       filterForFeatureTypes.set(key, value + ')');
     });
     const layer = this.layerService.getLayerByTabIndex(this.tabIndex);
@@ -297,9 +300,23 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
     // Set params layer name and id.
     this.dataSource.params.layerName = layer.name;
     this.dataSource.params.layerId = layer.id;
+    let numberOfFeatures = this.dataSource.getNrChecked();
+    if (this.dataSource.getNrChecked() > 0 ) {
+      this.rowsChecked = true;
+    } else {
+      this.rowsChecked = false;
+    }
+    if (checkedFeatures.length <= 0) {
+      numberOfFeatures = this.dataSource.totalNrOfRows;
+      checkedFeatures = this.dataSource.getfirstRowsAsAttributeListFeature();
+      checkedFeatures[0].related_featuretypes.forEach((rel) => {
+        relatedFeatures.push(rel);
+      })
+    }
+
     this.treeData.push({
       name: layer.alias ? layer.alias : layer.name,
-      numberOfFeatures: this.dataSource.getNrChecked(),
+      numberOfFeatures,
       features: checkedFeatures,
       formFeatures: this.dataSource.getCheckedRowsAsFeatures(),
       params: {
@@ -336,6 +353,7 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
                     isChild: data.isChild,
                     name: data.name,
                     columnNames: data.columnNames,
+                    numberOfFeatures: data.numberOfFeatures,
                   }
                 }
               });
@@ -349,9 +367,10 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
               isChild: this.treeData[0].isChild,
               name: this.treeData[0].name,
               columnNames: this.treeData[0].columnNames,
+              numberOfFeatures: this.treeData[0].numberOfFeatures,
             }
           }
-          this.dataSource.loadTableData(this, this.selectedTreeData);
+          this.attributelistService.setSelectedTreeData(this.selectedTreeData);
         } else {
           this.openDialog();
         }
@@ -479,13 +498,20 @@ export class AttributelistTableComponent implements AttributelistTable, OnInit, 
    * After setting filter(s) refresh the table
    */
   public refreshTable(): void {
+    // Nu refresh je vanuit een related tabel
     if (this.dataSource.params.hasDetail()) {
       if (this.dataSource.params.valueFilter) {
-        this.filterMap.get(-1).setRelatedFilter('RELATED_LAYER(' +
+          let filter = 'RELATED_LAYER(' +
           this.dataSource.params.layerId + ',' +
-          this.dataSource.params.featureTypeId + ',' +
-          this.dataSource.params.valueFilter + ' AND ' +
-          this.dataSource.params.featureFilter + ';)');
+          this.dataSource.params.featureTypeId + ',(' +
+          this.dataSource.params.valueFilter;
+          if (this.dataSource.params.featureFilter) {
+            filter += ' AND ' +
+              this.dataSource.params.featureFilter + '))';
+          } else {
+            filter += '))';
+          }
+          this.filterMap.get(-1).setRelatedFilter(filter);
       }
       this.dataSource.params.featureTypeId = -1;
       this.dataSource.params.featureTypeName = '';
