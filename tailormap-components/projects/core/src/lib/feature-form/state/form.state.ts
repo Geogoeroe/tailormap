@@ -16,7 +16,7 @@ export interface FormState {
   alreadyDirty: boolean;
   formOpen: boolean;
   treeOpen: boolean;
-  formConfigs: Map<string, FormConfiguration>;
+  formConfigs: FormConfiguration[];
   action: FormAction;
 }
 
@@ -27,6 +27,6 @@ export const initialFormState: FormState = {
   formOpen: false,
   alreadyDirty: false,
   treeOpen: false,
-  formConfigs: null,
+  formConfigs: [],
   action: FormAction.IDLE,
 }

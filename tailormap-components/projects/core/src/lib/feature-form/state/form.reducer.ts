@@ -1,6 +1,7 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import { FormState, initialFormState } from './form.state';
 import * as FormActions from './form.actions';
+import { FormConfiguration } from '../form/form-models';
 
 const onCloseFeatureForm  = (state: FormState): FormState => ({
   ...state,
@@ -39,8 +40,51 @@ const onSetFormConfigs = (state: FormState, payload : ReturnType<typeof FormActi
   formConfigs: payload.formConfigs,
 });
 
+const setDisable = (state: FormState, payload : ReturnType<typeof FormActions.setDisable>): FormState => ({
+  ...state,
+  formConfigs:state.formConfigs.map((oldConfig, key) => {
+      return {
+        ...oldConfig,
+        fields: oldConfig.fields.map(value => {
+          let options = value.options;
+          if(options){
+            options = options.map(option =>{
+              return {
+                ...option,
+                disabled: true
+              }
+            });
+          }
+          return {
+            ...value,
+            options
+          }
+        })
+      };
+  }),
+});
+
+const onSetFormConfigsOptions = (state: FormState, payload: ReturnType<typeof FormActions.setFormConfigsOptions>): FormState => ({
+  ...state,
+  formConfigs: state.formConfigs.map((oldConfig, key) => {
+    if (payload.fields.has(oldConfig.featureType)) {
+      const newFields = payload.fields.get(oldConfig.featureType);
+      return {
+        ...oldConfig,
+        fields: oldConfig.fields.map(attr => {
+          return newFields.find(field => field.key === attr.key) || attr;
+        }),
+      };
+    } else {
+      return oldConfig;
+    }
+  }),
+});
+
 const formReducerImpl = createReducer(
   initialFormState,
+  on(FormActions.setDisable, setDisable),
+  on(FormActions.setFormConfigsOptions, onSetFormConfigsOptions),
   on(FormActions.setFormConfigs, onSetFormConfigs),
   on(FormActions.setTreeOpen, onSetTreeOpen),
   on(FormActions.setSaveFeatures, onSaveFeature),

@@ -5,7 +5,7 @@ import { FormTreeHelpers } from './form-tree-helpers';
 import { Store } from '@ngrx/store';
 import { FormState } from '../state/form.state';
 import * as FormActions from '../state/form.actions';
-import { selectFormConfigs } from '../state/form.selectors';
+import { selectFormConfigsMap } from '../state/form.selectors';
 import { Subject } from 'rxjs';
 import { filter, map, takeUntil } from 'rxjs/operators';
 import { TreeService } from '../../shared/tree/tree.service';
@@ -84,7 +84,7 @@ export class FormTreeComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private createTree(features) {
-    this.store$.select(selectFormConfigs).pipe(takeUntil(this.destroyed)).subscribe(formConfigs => {
+    this.store$.select(selectFormConfigsMap).pipe(takeUntil(this.destroyed)).subscribe(formConfigs => {
       const tree : TreeModel<FormTreeMetadata> [] = FormTreeHelpers.convertFeatureToTreeModel(features, formConfigs);
       this.transientTreeHelper.createTree(tree);
     });

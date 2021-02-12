@@ -77,6 +77,10 @@ export class FormCreatorComponent implements OnChanges, OnDestroy, AfterViewInit
     this.destroyed.complete();
   }
 
+  public disableOption(){
+    this.store$.dispatch(FormActions.setDisable());
+  }
+
   private prepareFormConfig(): TabbedFields {
     const tabbedFields: TabbedFields = {tabs: new Map<number, Attribute[]>()};
     const attrs = this.formConfig.fields;

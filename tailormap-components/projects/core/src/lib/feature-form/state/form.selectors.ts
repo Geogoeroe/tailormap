@@ -2,6 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { FormState, formStateKey } from './form.state';
 import { LayerUtils } from '../../shared/layer-utils/layer-utils.service';
 import { Feature } from '../../shared/generated';
+import { FormConfiguration } from '../form/form-models';
 
 const selectFormState = createFeatureSelector<FormState>(formStateKey);
 
@@ -17,18 +18,27 @@ export const selectCloseAfterSaveFeatureForm = createSelector(selectFormState, s
 
 export const selectTreeOpen = createSelector(selectFormState, state => state.treeOpen);
 
-export const selectFormConfigs = createSelector(selectFormState, state => state.formConfigs);
+export const selectFormConfigsa = createSelector(selectFormState, state => state.formConfigs);
 
-export const selectFormFeaturetypes = createSelector(selectFormConfigs,
+export const selectFormConfigsMap = createSelector(selectFormConfigsa, formConfigs => {
+  const map: Map<string, FormConfiguration> = new Map<string, FormConfiguration>();
+  formConfigs.map(config => {
+    map.set(config.featureType, config);
+  })
+  return map;
+});
+
+
+export const selectFormFeaturetypes = createSelector(selectFormConfigsMap,
     formConfigs => formConfigs ? Array.from(formConfigs.keys()) : []);
 
 export const selectFormConfigForFeatureType = createSelector(
-  selectFormConfigs,
+  selectFormConfigsMap,
   (formConfigs, featureType : string) => formConfigs.get(LayerUtils.sanitizeLayername(featureType)),
 );
 
 export const selectFormConfigForFeature = createSelector(
-  selectFormConfigs,
+  selectFormConfigsMap,
   selectCurrentFeature,
   (formConfigs, feature: Feature) => {
     return feature ? formConfigs.get(LayerUtils.sanitizeLayername(feature.objecttype)) : null;
@@ -36,7 +46,7 @@ export const selectFormConfigForFeature = createSelector(
 );
 
 export const selectFeatureLabel = createSelector(
-  selectFormConfigs,
+  selectFormConfigsMap,
   (formConfigs, feature : Feature) : string => {
    return feature[formConfigs.get(LayerUtils.sanitizeLayername(feature.clazz))];
   },

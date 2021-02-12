@@ -7,7 +7,7 @@ import { MatSelectChange } from '@angular/material/select';
 import { FormConfiguration } from '../../../feature-form/form/form-models';
 import { Store } from '@ngrx/store';
 import { FormState } from '../../../feature-form/state/form.state';
-import { selectFormConfigForFeatureType, selectFormConfigs, selectFormFeaturetypes } from '../../../feature-form/state/form.selectors';
+import { selectFormConfigForFeatureType, selectFormConfigsMap, selectFormFeaturetypes } from '../../../feature-form/state/form.selectors';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { WORKFLOW_ACTION } from '../../../workflow/state/workflow-models';
@@ -43,7 +43,7 @@ export class AddFeatureMenuComponent implements OnInit, OnDestroy {
   }
 
   public init(): void {
-    this.store$.select(selectFormConfigs)
+    this.store$.select(selectFormConfigsMap)
       .pipe(takeUntil(this.destroyed))
       .subscribe(formConfigs => {
         this.calculateVisibleLayers();

@@ -1,13 +1,14 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { FormConfiguration, FormFieldType, SelectOption } from '../../form/form-models';
+import { Attribute, FormConfiguration, FormFieldType, SelectOption } from '../../form/form-models';
 import { LinkedAttributeRegistryService } from '../registry/linked-attribute-registry.service';
 import { AttributeControllerService, Attribuut } from '../../../shared/generated';
 import { LayerUtils } from '../../../shared/layer-utils/layer-utils.service';
 import { FormState } from '../../state/form.state';
 import { Store } from '@ngrx/store';
-import { selectFormConfigs } from '../../state/form.selectors';
+import { selectFormConfigsMap } from '../../state/form.selectors';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
+import * as FormActions from '../../state/form.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -21,10 +22,6 @@ export class DomainRepositoryService implements OnDestroy {
     private repo: AttributeControllerService,
     private store$: Store<FormState>,
     private registry: LinkedAttributeRegistryService) {
-    this.store$.select(selectFormConfigs).pipe(
-      takeUntil(this.destroyed),
-      filter(formConfigs => !!formConfigs),
-    ).subscribe(formConfigs => this.initFormConfig(formConfigs));
   }
 
   public ngOnDestroy(): void {
@@ -32,7 +29,8 @@ export class DomainRepositoryService implements OnDestroy {
     this.destroyed.complete();
   }
 
-  private initFormConfig(formConfigs: Map<string, FormConfiguration>) {
+  public initFormConfig(formConfigs: Map<string, FormConfiguration>) {
+
     this.formConfigs = formConfigs;
     const domainAttrs: Array<number> = [];
     formConfigs.forEach((config, key) => {
@@ -45,6 +43,7 @@ export class DomainRepositoryService implements OnDestroy {
     if (domainAttrs.length > 0) {
       this.repo.attributes({ids: domainAttrs}).pipe(takeUntil(this.destroyed)).subscribe(result => {
 
+        const tempList: Map<string, Attribute[]> = new Map<string, Attribute[]>();
         this.linkedAttributes = result;
         this.registry.setLinkedAttributes(this.linkedAttributes);
         for (const attribute of this.linkedAttributes) {
@@ -53,6 +52,7 @@ export class DomainRepositoryService implements OnDestroy {
           if (!fc) {
             continue;
           }
+          let tempFields :  Attribute[] = [];
           fc.fields.forEach(field => {
             if (field.linkedList && field.linkedList === attribute.id) {
               const options: SelectOption[] = [];
@@ -65,10 +65,20 @@ export class DomainRepositoryService implements OnDestroy {
                   disabled: false,
                 });
               }
-              field.options = options;
+              const tempfield = {
+                ...field,
+                options
+              };
+              tempFields.push(tempfield);
             }
           });
+          if(tempList.has(featureType)){
+            tempFields = tempFields.concat(tempList.get(featureType));
+          }
+          tempList.set(featureType, tempFields);
         }
+
+        this.store$.dispatch(FormActions.setFormConfigsOptions ({fields: tempList}));
       });
     }
   }

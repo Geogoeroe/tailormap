@@ -9,6 +9,7 @@ import { catchError } from 'rxjs/operators';
 import { FormState } from '../../feature-form/state/form.state';
 import { Store } from '@ngrx/store';
 import * as FormActions from '../../feature-form/state/form.actions';
+import { DomainRepositoryService } from '../../feature-form/linked-fields/domain-repository/domain-repository.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ export class FormconfigRepositoryService {
     private http: HttpClient,
     private featureController: FeatureControllerService,
     private tailorMap: TailorMapService,
+    private domainRepo: DomainRepositoryService,
     private store$ : Store<FormState>,
   ) {
     this.http.get<FormConfigurations>(this.tailorMap.getContextPath() + '/action/form', {
@@ -29,8 +31,10 @@ export class FormconfigRepositoryService {
       .subscribe((data: FormConfigurations) => {
         this.formConfigs = new Map<string, FormConfiguration>();
         const featureTypes = [];
+        const formconfigurations : FormConfiguration[] = [];
         for (const key in data.config) {
           if (data.config.hasOwnProperty(key)) {
+            formconfigurations.push(data.config[key]);
             const sanitized = LayerUtils.sanitizeLayername(key);
             this.formConfigs.set(sanitized, data.config[key]);
             featureTypes.push(sanitized);
@@ -50,7 +54,8 @@ export class FormconfigRepositoryService {
               }
             });
 
-            this.store$.dispatch(FormActions.setFormConfigs ({formConfigs: this.formConfigs}));
+            this.store$.dispatch(FormActions.setFormConfigs ({formConfigs: formconfigurations}));
+            this.domainRepo.initFormConfig(this.formConfigs);
         });
 
       });

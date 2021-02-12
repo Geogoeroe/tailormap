@@ -13,7 +13,7 @@ import * as FormActions from '../state/form.actions';
 import * as WorkflowActions from '../../workflow/state/workflow.actions';
 import {
   selectCloseAfterSaveFeatureForm, selectCurrentFeature, selectFeatureFormOpen, selectFormAlreadyDirty, selectFormConfigForFeatureType,
-  selectFormConfigs, selectOpenFeatureForm, selectTreeOpen,
+  selectFormConfigsMap, selectOpenFeatureForm, selectTreeOpen,
 } from '../state/form.selectors';
 import { LayerUtils } from '../../shared/layer-utils/layer-utils.service';
 import { WORKFLOW_ACTION } from '../../workflow/state/workflow-models';
@@ -85,7 +85,7 @@ export class FormComponent implements OnDestroy, OnChanges, OnInit {
     this.formDirty = false;
     combineLatest([
       this.store$.select(selectFormConfigForFeatureType, this.feature.clazz),
-      this.store$.select(selectFormConfigs),
+      this.store$.select(selectFormConfigsMap),
     ])
       .pipe(takeUntil(this.destroyed))
       .subscribe(([formConfig, configs]) => {

@@ -1,6 +1,7 @@
 import { createAction, props } from '@ngrx/store';
 import { Feature } from '../../shared/generated';
-import { FormConfiguration } from '../form/form-models';
+import { Attribute, FormConfiguration } from '../form/form-models';
+
 
 const formActionsPrefix = '[Form]';
 
@@ -30,6 +31,20 @@ export const setFeature = createAction(
 
 export const setFormConfigs = createAction(
   `${formActionsPrefix} Set formconfigurations`,
-  props<{ formConfigs : Map<string, FormConfiguration> }>(),
+  props<{ formConfigs : FormConfiguration[] }>(),
 );
 
+export const setFormConfigsOptions = createAction(
+  `${formActionsPrefix} Set options in formconfigurations`,
+  props<{ fields : Map<string,  Attribute[]> }>(),
+);
+
+
+export const setOptionsDisables = createAction(
+  `${formActionsPrefix} Set options disabled`,
+  props<{ fields : Map<string,  Attribute[]> }>(),
+);
+
+export const setDisable = createAction(
+  `${formActionsPrefix} Set option disabled`,
+);
