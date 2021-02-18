@@ -28,8 +28,17 @@ export const setFeature = createAction(
   props<{ feature : Feature }>(),
 );
 
+export const setNewFeature = createAction(
+  `${formActionsPrefix} Add new feature as child of current feature`,
+  props<{ feature : Feature }>(),
+);
+
 export const setFormConfigs = createAction(
   `${formActionsPrefix} Set formconfigurations`,
   props<{ formConfigs : Map<string, FormConfiguration> }>(),
 );
 
+export const setFormEditting = createAction(
+  `${formActionsPrefix} Set form editting`,
+  props<{ editting: boolean }>(),
+);

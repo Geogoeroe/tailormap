@@ -19,6 +19,7 @@ export interface FormState {
   formConfigsLoaded: boolean;
   formConfigs: Map<string, FormConfiguration>;
   action: FormAction;
+  editting: boolean;
 }
 
 export const initialFormState: FormState = {
@@ -31,4 +32,5 @@ export const initialFormState: FormState = {
   formConfigsLoaded: false,
   formConfigs: null,
   action: FormAction.IDLE,
+  editting: false,
 }
